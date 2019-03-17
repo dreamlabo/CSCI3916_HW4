@@ -5,6 +5,7 @@ var authJwtController = require('./auth_jwt');
 var User = require('./Users');
 var jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
+var http = require('https');
 
 var app = express();
 module.exports = app; // for testing
