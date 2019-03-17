@@ -3,6 +3,7 @@ var bodyParser = require('body-parser');
 var passport = require('passport');
 var authJwtController = require('./auth_jwt');
 var User = require('./Users');
+var Movie = require('./Movies');
 var jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 var http = require('https');
@@ -72,7 +73,7 @@ router.post('/signup', function(req, res) {
         });
     }
 });
-///////
+
 router.post('/signin', function(req, res) {
     var userNew = new User();
     userNew.name = req.body.name;
@@ -96,6 +97,35 @@ router.post('/signin', function(req, res) {
 
     });
 });
+
+
+// Working with /movie route
+// TODO need POST, PUT, DELETE, GET
+router.route('/movies')
+
+    .post(authJwtController.isAuthenticated,function (req, res) {
+        if (!req.body.Title || !req.body.Year) {
+            res.json({success: false, message: 'Need a title and year.'});
+        }
+        else{
+            var movieNew = new Movie();
+            movieNew.Title = req.body.Title;
+            movieNew.Year = req.body.Year;
+            // save the movie
+            movieNew.save(function(err) {
+                if (err) {
+                    // duplicate entry
+                    if (err.code == 11000)
+                        return res.json({ success: false, message: 'A movie with that title already exists. '});
+                    else
+                        return res.send(err);
+                }
+
+                res.json({ success: true, message: 'New movie created!' });
+            });
+        }
+    });
+
 
 app.use('/', router);
 app.listen(process.env.PORT || 8080);
