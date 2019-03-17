@@ -71,7 +71,7 @@ router.post('/signup', function(req, res) {
         });
     }
 });
-
+///////
 router.post('/signin', function(req, res) {
     var userNew = new User();
     userNew.name = req.body.name;
