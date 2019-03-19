@@ -6,7 +6,7 @@ var User = require('./Users');
 var Movie = require('./Movies');
 var jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
-var http = require('https');
+//var http = require('https');
 
 var app = express();
 module.exports = app; // for testing
@@ -104,26 +104,70 @@ router.post('/signin', function(req, res) {
 router.route('/movies')
 
     .post(authJwtController.isAuthenticated,function (req, res) {
-        if (!req.body.Title || !req.body.Year) {
-            res.json({success: false, message: 'Need a title and year.'});
+        //if (!req.body.Title) {
+            //res.json({success: false, message: "You must enter a title"});
+        //}
+
+        //if (!req.body.Year) {
+            //res.json({success: false, message: "You must enter a the year the movie was released."});
+       // }
+
+       // if (!req.body.Genre) {
+            //res.json({success: false, message: "You must enter a genre for the movie."});
+       // }
+
+        if(req.body.Actors.length < 3) {
+           res.json({success: false, message: 'Please pass at least three actors.'})
         }
         else{
             var movieNew = new Movie();
             movieNew.Title = req.body.Title;
             movieNew.Year = req.body.Year;
+            movieNew.Genre = req.body.Genre;
+            movieNew.Actors = req.body.Actors;
+
             // save the movie
             movieNew.save(function(err) {
                 if (err) {
                     // duplicate entry
-                    if (err.code == 11000)
-                        return res.json({ success: false, message: 'A movie with that title already exists. '});
-                    else
+                    //if (err.code == 11000)
+                        //return res.json({ success: false, message: 'A movie with that title already exists. '});
+                    //else
                         return res.send(err);
                 }
-
                 res.json({ success: true, message: 'New movie created!' });
             });
         }
+    })
+
+
+// update the route with movie ID
+router.route('/movies/:movieId')
+    .put(authJwtController.isAuthenticated, function (req, res) {
+        var id = req.params.movieId;
+        Movie.findById(id, function(err, movie) {
+            if (err) res.send(err);
+
+            if (req.body.Title) {
+                movie.Title = req.body.Title;
+            }
+            if (req.body.Year) {
+                movie.Year = req.body.Year;
+            }
+            if (req.body.Genre) {
+                movie.Genre = req.body.Genre;
+            }
+            if (req.body.Actors) {
+                movie.Actors = req.body.Actors;
+            }
+
+            movie.save(function(err) {
+                if (err) {
+                    return res.send(err);
+                }
+                res.json({ success: true, message: 'The movie has been updated'});
+            });
+        });
     });
 
 
