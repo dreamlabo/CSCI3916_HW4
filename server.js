@@ -6,6 +6,7 @@ var passport = require('passport');
 var authJwtController = require('./auth_jwt');
 var User = require('./Users');
 var Movie = require('./Movies');
+var Review = require('./Reviews');
 var jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 //var http = require('https');
@@ -88,7 +89,7 @@ router.post('/signin', function(req, res) {
             if (isMatch) {
                 var userToken = {id: user._id, username: user.username};
                 var token = jwt.sign(userToken, process.env.SECRET_KEY);
-                res.json({success: true, token: 'JWT ' + token});
+                res.json({success: true, username: userNew.username, token: 'JWT ' + token});
             }
             else {
                 res.status(401).send({success: false, message: 'Authentication failed.'});
@@ -96,55 +97,6 @@ router.post('/signin', function(req, res) {
         });
     });
 });
-
-
-router.route('/movies')
-    .delete(authJwtController.isAuthenticated, function (req, res){
-
-        Movie.findOneAndDelete({Title: req.body.Title}, function(err, movie){
-            if (err) {   // if an error happens within the findOneAndDelete function
-                res.send(err);
-            }
-            else if (movie == null){   // if the movie Title doesn't exist
-                res.status(400).send({success: false, message: 'Movie doesnt exist.'})
-            }
-            else{   // the movie has been deleted
-                res.status(200).send({success: true, message: 'Movie Deleted.'});
-            }
-        });
-    })
-
-    .post(authJwtController.isAuthenticated,function (req, res) {
-        // the rest of the error messages are generated from the MovieSchema via the "require: true" statement
-        // except for this one.
-        // todo : put this validation in the movie schema instead of here
-        if(req.body.Actors.length < 3) {
-           res.json({success: false, message: 'Please pass at least three actors.'})
-        }
-
-        else{
-            var movieNew = new Movie();
-            movieNew.Title = req.body.Title;
-            movieNew.Year = req.body.Year;
-            movieNew.Genre = req.body.Genre;
-            movieNew.Actors = req.body.Actors;
-
-            // save the movie
-            movieNew.save(function(err) {
-                if (err) {
-                    //duplicate entry
-                    if (err.code == 11000)
-                        return res.json({ success: false, message: 'A movie with that title already exists. '});
-                    else
-                        return res.send(err);
-                }
-                else {
-                    res.json({success: true, message: 'New movie created!'});
-                }
-            });
-        }
-    });
-
 
 // update the route with movie ID
 router.route('/movies/:_ID')
@@ -185,6 +137,147 @@ router.route('/movies/:_ID')
             res.json(movie);
         });
     });
+
+
+router.route('/movies')
+    .delete(authJwtController.isAuthenticated, function (req, res){
+
+        Movie.findOneAndDelete({Title: req.body.Title}, function(err, movie){
+            if (err) {   // if an error happens within the findOneAndDelete function
+                res.send(err);
+            }
+            else if (movie == null){   // if the movie Title doesn't exist
+                res.status(400).send({success: false, message: 'Movie doesnt exist.'})
+            }
+            else{   // the movie has been deleted
+                res.status(200).send({success: true, message: 'Movie Deleted.'});
+            }
+        });
+    })
+
+    .post(authJwtController.isAuthenticated,function (req, res) {
+        // the rest of the error messages are generated from the MovieSchema via the "require: true" statement
+        // except for this one.
+        // todo : put this validation in the movie schema instead of here
+        if(req.body.Actors.length < 3) {
+            res.json({success: false, message: 'Please pass at least three actors.'})
+        }
+
+        else{
+            var movieNew = new Movie();
+            movieNew.Title = req.body.Title;
+            movieNew.Year = req.body.Year;
+            movieNew.Genre = req.body.Genre;
+            movieNew.Actors = req.body.Actors;
+
+            // save the movie
+            movieNew.save(function(err) {
+                if (err) {
+                    //duplicate entry
+                    if (err.code == 11000)
+                        return res.json({ success: false, message: 'A movie with that title already exists. '});
+                    else
+                        return res.send(err);
+                }
+                else {
+                    res.json({success: true, message: 'New movie created!'});
+                }
+            });
+        }
+    });
+
+router.route('/reviews')
+    .post(authJwtController.isAuthenticated,function (req, res) {
+        // Todo: check reviewer name is in database?
+        if (!req.body.reviewerName) {
+            res.json({success: false, message: "username required"})
+        }
+        // Todo: Check movieTitle is in the movies database
+        else if (!req.body.movieTitle) {
+            res.json({success: false, message: "Review must have a title."})
+        } else if (!req.body.rating) {
+            res.json({success: false, message: "Review must have a rating."})
+        } else if (req.body.rating < 1 || req.body.rating > 5) {
+            res.json({success: false, message: "Rating must be between 1 and 5 stars."})
+        } else
+            Movie.findOne({Title: req.body.movieTitle}).select('Title').exec(function (err, movieFound) {
+                if (err) res.send(err);
+
+                if (movieFound) {
+                    var reviewNew = new Review();
+                    reviewNew.reviewerName = req.body.reviewerName;
+                    reviewNew.movieTitle = req.body.movieTitle;
+                    reviewNew.review = req.body.review;
+                    reviewNew.rating = req.body.rating;
+
+                    // save the movie
+                    reviewNew.save(function (err) {
+                        if (err) {
+                            return res.send(err);
+                        } else {
+                            res.json({success: true, message: 'New review created!'});
+                        }
+                    })
+                } else {
+                    //var movieTitle = req.body.movieTitle.replace(/\//g, '')
+                    res.status(400);
+                    res.json({message: "The movie \'" + req.body.movieTitle + "\' does not exist in the database."});
+                }
+
+            })
+    });
+
+router.route('/reviews')
+    .get(authJwtController.isAuthenticated, function (req, res) {
+
+        if (req.query.reviews === 'true'){
+            //console.log(allowed);
+            var title = req.body.Title;
+            Movie.findOne({Title: req.body.Title}).select('Title').exec(function (err, movieFound) {
+                if (err) res.send(err);
+                else if(movieFound)
+                {
+                    Movie.aggregate([
+                        {
+                            $match: {
+                                Title: title
+                            }
+                        },
+                        {
+                            "$lookup":
+                                {
+                                    from: "reviews",
+                                    localField: "Title",
+                                    foreignField: "movieTitle",
+                                    as: "movieReviews"
+                                }
+                        }
+
+                    ]).exec((err, movieReview) => {
+                        if (err) res.json({message: "Failed"});
+                        res.json(movieReview);
+                    })
+                }
+                else {res.status(400);
+                    res.json({success: false, message: "The movie '" + title + "' is not in the database."});
+
+                }
+            });
+        }
+        else {
+            //res.status(400);
+            //res.json({success: false, message: 'req.params.reviews not set to true'});
+
+            Movie.findOne({Title: req.body.Title}).exec(function (err, movieFound) {
+                if (err) res.send(err);
+                res.json(movieFound);
+            })
+        }
+    });
+
+
+
+
 
 app.use('/', router);
 app.listen(process.env.PORT || 8080);
