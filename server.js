@@ -221,7 +221,7 @@ router.route('/reviews')
                 } else {
                     //var movieTitle = req.body.movieTitle.replace(/\//g, '')
                     res.status(400);
-                    res.json({message: "The movie \'" + req.body.movieTitle + "\' does not exist in the database."});
+                    res.json({success: false, message: "The movie \'" + req.body.movieTitle + "\' does not exist in the database."});
                 }
 
             })
@@ -229,10 +229,10 @@ router.route('/reviews')
 
 router.route('/reviews')
     .get(authJwtController.isAuthenticated, function (req, res) {
-
+        var title = req.body.Title;
         if (req.query.reviews === 'true'){
             //console.log(allowed);
-            var title = req.body.Title;
+            //var title = req.body.Title;
             Movie.findOne({Title: req.body.Title}).select('Title').exec(function (err, movieFound) {
                 if (err) res.send(err);
                 else if(movieFound)
@@ -268,11 +268,15 @@ router.route('/reviews')
             //res.status(400);
             //res.json({success: false, message: 'req.params.reviews not set to true'});
 
-            Movie.findOne({Title: req.body.Title}).exec(function (err, movieFound) {
+            Movie.findOne({Title: title}).exec(function (err, movieFound) {
                 if (err) res.send(err);
-                res.json(movieFound);
-            })
-        }
+
+                if (movieFound == null) {
+                        res.status(400);
+                        res.json({success: false, message: "The movie '" + title + "' is not in the database."});
+                    }
+                })
+            }
     });
 
 
