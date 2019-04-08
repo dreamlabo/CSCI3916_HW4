@@ -192,7 +192,6 @@ router.route('/reviews')
         if (!req.body.reviewerName) {
             res.json({success: false, message: "username required"})
         }
-        // Todo: Check movieTitle is in the movies database
         else if (!req.body.movieTitle) {
             res.json({success: false, message: "Review must have a title."})
         } else if (!req.body.rating) {
@@ -221,20 +220,20 @@ router.route('/reviews')
                 } else {
                     //var movieTitle = req.body.movieTitle.replace(/\//g, '')
                     res.status(400);
-                    res.json({success: false, message: "The movie \'" + req.body.movieTitle + "\' does not exist in the database."});
+                    res.json({message: "The movie \'" + req.body.movieTitle + "\' does not exist in the database."});
                 }
-
             })
     });
 
 router.route('/reviews')
     .get(authJwtController.isAuthenticated, function (req, res) {
         var title = req.body.Title;
+
         if (req.query.reviews === 'true'){
-            //console.log(allowed);
-            //var title = req.body.Title;
+
             Movie.findOne({Title: req.body.Title}).select('Title').exec(function (err, movieFound) {
                 if (err) res.send(err);
+
                 else if(movieFound)
                 {
                     Movie.aggregate([
@@ -252,28 +251,29 @@ router.route('/reviews')
                                     as: "movieReviews"
                                 }
                         }
-
                     ]).exec((err, movieReview) => {
                         if (err) res.json({message: "Failed"});
                         res.json(movieReview);
                     })
+
                 }
                 else {res.status(400);
                     res.json({success: false, message: "The movie '" + title + "' is not in the database."});
-
                 }
             });
         }
-        else {
-            //res.status(400);
-            //res.json({success: false, message: 'req.params.reviews not set to true'});
 
-            Movie.findOne({Title: title}).exec(function (err, movieFound) {
-                if (err) res.send(err);
+        else {   // else the review query not set to true, just return the movie without the review
+                Movie.findOne({Title: title}).exec(function (err, movieFound) {
+                    if (err) res.send(err);
 
-                if (movieFound == null) {
-                        res.status(400);
-                        res.json({success: false, message: "The movie '" + title + "' is not in the database."});
+                    if (movieFound == null) {
+                            res.status(400);
+                            res.json({success: false, message: "The movie '" + title + "' is not in the database."});
+                    }
+
+                    else {
+                        res.json(movieFound)
                     }
                 })
             }
