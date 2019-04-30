@@ -144,6 +144,45 @@ router.route('/movies/:_ID')
 
 
 router.route('/movies')
+    .get(authJwtController.isAuthenticated, function (req, res) {
+
+        if (req.query.reviews === 'true'){
+            Movie.aggregate([
+                {
+                    $match: {
+                        Title: title
+                    }
+                },
+                {
+                    "$lookup":
+                        {
+                            from: "reviews",
+                            localField: "Title",
+                            foreignField: "movieTitle",
+                            as: "movieReviews"
+                        }
+                }
+            ]).exec((err, moviesReview) => {
+                if (err) res.json({message: "Failed"});
+                res.json(moviesReview);
+            })
+        }
+        else {   // else the review query not set to true, just return the movie without the review
+            Movie.find(function (err, moviesFound) {
+                if (err) res.send(err);
+
+                if (moviesFound == null) {
+                    res.status(400);
+                    res.json({success: false, message: "The movies is not in the database."});
+                }
+
+                else {
+                    res.json(moviesFound)
+                }
+            })
+        }
+    })
+
     .delete(authJwtController.isAuthenticated, function (req, res){
 
         Movie.findOneAndDelete({Title: req.body.Title}, function(err, movie){
