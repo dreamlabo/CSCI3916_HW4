@@ -8,6 +8,7 @@ var User = require('./Users');
 var Movie = require('./Movies');
 var Review = require('./Reviews');
 var jwt = require('jsonwebtoken');
+var cors = require('cors');
 const mongoose = require('mongoose');
 //var http = require('https');
 
@@ -15,7 +16,7 @@ var app = express();
 module.exports = app; // for testing
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-
+app.use(cors());
 app.use(passport.initialize());
 
 var router = express.Router();
@@ -117,6 +118,9 @@ router.route('/movies/:_ID')
             if (req.body.Actors) {
                 movie.Actors = req.body.Actors;
             }
+            if (req.body.imageUrl){
+                movie.imageUrl = req.body.imageUrl;
+            }
 
             movie.save(function (err) {
                 if (err) {
@@ -169,6 +173,7 @@ router.route('/movies')
             movieNew.Year = req.body.Year;
             movieNew.Genre = req.body.Genre;
             movieNew.Actors = req.body.Actors;
+            movieNew.imageUrl = req.body.imageUrl;
 
             // save the movie
             movieNew.save(function(err) {

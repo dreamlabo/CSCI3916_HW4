@@ -15,7 +15,8 @@ var MovieSchema = new Schema({
     Year: { type: Number, required: [true, "You must enter the year the movie was released."]},
     Genre: { type: String,
              required: true, enum: GENRES},
-    Actors:[{ActorName: String, CharacterName: String}]
+    Actors:[{ActorName: String, CharacterName: String}],
+    imageUrl: {type: String, required: true}
 });
 
 MovieSchema.path("Actors").validate(function(actors) {

@@ -13,11 +13,12 @@
     "auth-jwt": "^1.0.2",
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.18.2",
+    "cors": "^2.8.5",
     "express": "^4.16.2",
     "hoek": "^6.1.2",
     "jsonwebtoken": "^8.1.1",
     "mongodb": "^3.1.13",
-    "mongoose": "^5.4.19",
+    "mongoose": "^5.5.4",
     "passport": "^0.4.0",
     "passport-http": "^0.3.0",
     "passport-jwt": "^4.0.0"
